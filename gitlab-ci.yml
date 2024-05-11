@@ -1,0 +1,33 @@
+variables:
+  DOCKER_TLS_CERTDIR: ""
+  DOCKER_HOST: tcp://docker:2375
+  TAG:
+    description: add tag
+  IMAGE_TAG: $CI_REGISTRY_IMAGE:$TAG
+
+stages:
+  - test  
+  - build
+
+test:
+  stage: test
+  image: python:3.8-alpine
+  before_script:
+    - pip install -r requirements.txt
+    - pip install pytest
+    - cd app
+    - pwd
+    - ls -lah
+  script:
+    - pytest -v test.py
+
+build:
+  stage: build
+  when: manual
+  before_script:
+    - docker login -u $CI_REGISTRY_USER -p $ACCESS_TOKEN $CI_REGISTRY
+  script:
+    - echo 'Building image...'
+    - echo $IMAGE_TAG
+    - docker build -t $IMAGE_TAG .
+    - docker push $IMAGE_TAG
